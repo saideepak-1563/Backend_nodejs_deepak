@@ -1,38 +1,78 @@
 const Vendor = require('../models/Vendor')
 const jwt = require("jsonwebtoken")
-const bcrypt = require("bcryptjs")
+const bcrypt = require('bcryptjs')
 const dotenv = require('dotenv')
 
 dotenv.config()
 
 const secretKey = process.env.WhatIsYourName
 
-const vendorRegister = async (req,res)=>{
-    const {username, email, password} = req.body
-    
-    try {
-        const vendorEmail = await Vendor.findOne({email})
-        if(vendorEmail){
-            return res.status(400).json("email already exist")
-        }
-        const hashedPassword = await bcrypt.hash(password,10)
 
+// const vendorRegister = async (req,res)=>{
+//     const {username, email, password} = req.body
+    
+//     try {
+//         const vendorEmail = await Vendor.findOne({email})
+//         if(vendorEmail){
+//             return res.status(400).json("email already exist")
+//         }
+//         const hashedPassword = await bcrypt.hash(password, 10);
+
+//         const newVendor = new Vendor({
+//             username,
+//             email,
+//             password : hashedPassword,
+//         })
+
+//         await newVendor.save()
+        
+//         res.status(201).json({message: "Vendor Registered Successfully"})
+//         console.log("registered")
+
+//     } catch (error) {
+//         console.log(error)
+//         res.status(500).json({error:"internal server error"})
+//     }
+// }
+
+
+const vendorRegister = async (req, res) => {
+    const { username, email, password } = req.body;
+
+    try {
+        // Check if any of the required fields are missing
+        if (!username || !email || !password) {
+            return res.status(400).json({ error: "Missing required fields" });
+        }
+
+        // Check if the email already exists in the database
+        const vendorEmail = await Vendor.findOne({ email });
+        if (vendorEmail) {
+            return res.status(400).json({ error: "Email already exists" });
+        }
+
+        // Hash the password using bcrypt
+        const hashedPassword = await bcrypt.hash(password, 10); // Ensure password is not undefined
+
+        // Create a new vendor instance with the hashed password
         const newVendor = new Vendor({
             username,
             email,
-            password : hashedPassword,
-        })
+            password: hashedPassword,
+        });
 
-        await newVendor.save()
-        
-        res.status(201).json({message: "Vendor Registered Successfully"})
-        console.log("registered")
+        // Save the new vendor to the database
+        await newVendor.save();
 
+        // Respond with a success message
+        res.status(201).json({ message: "Vendor Registered Successfully" });
     } catch (error) {
-        console.log(error)
-        res.status(500).json({error:"internal server error"})
+        // Handle any errors that occur during registration
+        console.error("Error in vendor registration:", error);
+        res.status(500).json({ error: "Internal Server Error" });
     }
-}
+};
+
 
 const vendorLogin = async(req,res)=>{
     const { email, password} = req.body
